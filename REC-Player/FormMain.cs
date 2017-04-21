@@ -15,38 +15,49 @@ namespace ry.rec
 {
     public partial class FormMain : Form
     {
+        public static Form mainForm;
+
         private readonly ChromiumWebBrowser browser;
 
         // 播放管理
         private NvrManager nvrManager;
 
         // 播放界面
-        RealPlayerGrid realPlayerGrid = new RealPlayerGrid(5, 1);
+        RealPlayerGrid realPlayerGrid;
 
         public FormMain()
         {
             InitializeComponent();
 
-            String mc_url = ConfigurationManager.AppSettings["mc_url"];
+            mainForm = this;
             
+            // 主窗口设置
             WindowState = FormWindowState.Maximized;
+
+            // 浏览器设置
+            String mc_url = ConfigurationManager.AppSettings["MC_URL"];
             browser = new ChromiumWebBrowser(mc_url)
             {
                 Dock = DockStyle.Fill,
             };
             this.Controls.Add(browser);
-            realPlayerGrid.Dock = DockStyle.Left;
-            this.Controls.Add(realPlayerGrid);
-            realPlayerGrid.Width = 300;
+
 
             // 视频播放管理对象
             nvrManager = new NvrManager();
-            nvrManager.setRealPlayerGrid(realPlayerGrid);
-            realPlayerGrid.setNvrManager(nvrManager);
+
+            // 实时播放Grid
+            realPlayerGrid = new RealPlayerGrid(nvrManager,5, 1);
+            realPlayerGrid.Dock = DockStyle.Left;
+            realPlayerGrid.Width = 300;
+            this.Controls.Add(realPlayerGrid);
+
+            // 播放Grid与NvrManager关联
+            nvrManager.setCurrentRealPlayerGrid(realPlayerGrid);
+            nvrManager.addRealPlayerGrid(realPlayerGrid);
 
             // 向浏览器注册对象
-            browser.RegisterAsyncJsObject("videoPlayer",nvrManager);
-
+            browser.RegisterAsyncJsObject("videoPlayer", nvrManager);
         }
 
     }

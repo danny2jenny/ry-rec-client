@@ -14,9 +14,12 @@ namespace ry.rec
 {
     public partial class FormRealPlayer : Form
     {
-        // 父容器
-        RealPlayerGrid layerPanel;
+        // Grid父容器
+        RealPlayerGrid parentGrid;
         int column, row;
+
+        // NVR Manager
+        NvrManager nvrManager;
 
         // 加载光标资源
         Cursor cur_up = new Cursor(Resources.up.GetHicon());
@@ -47,13 +50,16 @@ namespace ry.rec
         public CHCNetSDK.NET_DVR_PREVIEWINFO previewInfo = new CHCNetSDK.NET_DVR_PREVIEWINFO();
         public Int32 realSession = -1;
 
+        // NVR 和相应的通道
         int nvr, channel;
 
-        public FormRealPlayer()
+        // 构造函数
+        public FormRealPlayer(NvrManager mgr)
         {
             InitializeComponent();
 
             this.BackColor = Color.White;
+            this.nvrManager = mgr;
 
             previewInfo.hPlayWnd = this.videoBox.Handle;//预览窗口 live view window
             previewInfo.lChannel = 33;//预览的设备通道 the device channel number
@@ -64,18 +70,22 @@ namespace ry.rec
 
         }
 
+        // 设置播放信息
         public void setVideoId(int nvr, int channel)
         {
             this.nvr = nvr;
             this.channel = channel;
         }
 
-        // 触发重新绘制窗体
-        private void formRedraw()
+        // 停止播放
+        public void stop()
         {
-            Color color = this.BackColor;
-            this.BackColor = Color.Yellow;
-            this.BackColor = color;
+            if (isPlaying)
+            {
+                nvrManager.realPlayStop(this.realSession);
+                isPlaying = false;
+                this.Refresh();
+            }
         }
 
         // 设置颜色
@@ -85,7 +95,8 @@ namespace ry.rec
             {
                 this.isSelected = true;
                 this.BackColor = Color.Red;
-            } else
+            }
+            else
             {
                 this.isSelected = false;
                 this.BackColor = Color.White;
@@ -93,9 +104,9 @@ namespace ry.rec
         }
 
         // 设置显示的容器和其他的值
-        public void SetPlayer(TableLayoutPanel pr, int column, int row)
+        public void setGrid(RealPlayerGrid pr, int column, int row)
         {
-            this.layerPanel = (RealPlayerGrid)pr;
+            this.parentGrid = pr;
             this.column = column;
             this.row = row;
         }
@@ -106,22 +117,39 @@ namespace ry.rec
             if (this.fullScreen)
             {
                 // 缩小
-                this.Dock = DockStyle.Fill;
-                this.TopLevel = false;
-                this.FormBorderStyle = FormBorderStyle.None;
-                //this.WindowState = FormWindowState.Normal;
-                this.fullScreen = false;
-                layerPanel.Controls.Add(this, column, row);
+                if (parentGrid != null)
+                {
+
+                    this.Dock = DockStyle.Fill;
+                    this.TopLevel = false;
+                    this.FormBorderStyle = FormBorderStyle.None;
+                    this.fullScreen = false;
+                    parentGrid.Controls.Add(this, column, row);
+                }
+                else
+                {
+                    this.TopLevel = true;
+                    this.WindowState = FormWindowState.Normal;
+                    this.fullScreen = false;
+                }
+
             }
             else
             {
                 // 全屏化
-                this.Parent.Controls.Remove(this);
-                this.TopLevel = true;
-                //this.Dock = DockStyle.None;
-                //this.FormBorderStyle = FormBorderStyle.FixedToolWindow;
-                this.WindowState = FormWindowState.Maximized;
-                this.fullScreen = true;
+                if (parentGrid != null)
+                {
+                    this.Parent.Controls.Remove(this);
+                    this.TopLevel = true;
+                    this.WindowState = FormWindowState.Maximized;
+                    this.fullScreen = true;
+                }
+                else
+                {
+                    this.TopLevel = true;
+                    this.FormBorderStyle = FormBorderStyle.None;
+                    this.fullScreen = true;
+                }
             }
         }
 
@@ -135,10 +163,11 @@ namespace ry.rec
 
             if (e.Button == MouseButtons.Left)
             {
-                Task.Run(() => {
-                    layerPanel.nvrManager.ptzCtlStart(nvr, channel, ptzDirection, ptzSpeed);
+                Task.Run(() =>
+                {
+                    nvrManager.ptzCtlStart(nvr, channel, ptzDirection, ptzSpeed);
                 });
-                
+
             }
 
         }
@@ -154,7 +183,7 @@ namespace ry.rec
             {
                 Task.Run(() =>
                 {
-                    layerPanel.nvrManager.ptzStop(nvr, channel);
+                    nvrManager.ptzStop(nvr, channel);
                 });
             }
         }
@@ -171,40 +200,46 @@ namespace ry.rec
                 // 上滚
                 Task.Run(() =>
                 {
-                    layerPanel.nvrManager.zoomStart(nvr, channel, 11);
+                    nvrManager.zoomStart(nvr, channel, 11);
                 });
-                
+
             }
             else
             {
                 // 下滚
                 Task.Run(() =>
                 {
-                    layerPanel.nvrManager.zoomStart(nvr, channel, 12);
+                    nvrManager.zoomStart(nvr, channel, 12);
                 });
             }
         }
 
+        private void FormRealPlayer_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            stop();
+            if (parentGrid == null)
+            {
+                nvrManager.removeRealPlayer(this);
+            }
+
+            this.Dispose();
+            GC.SuppressFinalize(this);
+        }
 
         // 视频单击
         private void videoBox_MouseClick(object sender, MouseEventArgs e)
         {
             // 左键，设置焦点
-            if (e.Button == MouseButtons.Left)
+            if ((e.Button == MouseButtons.Left) && (parentGrid != null))
             {
-                layerPanel.unSelectAll();
+                parentGrid.unSelectAll();
                 formSelect(true);
             }
 
             // 右键，关闭视频
             if (e.Button == MouseButtons.Right)
             {
-                if (isPlaying)
-                {
-                    layerPanel.nvrManager.realPlayStop(this.realSession);
-                    isPlaying = false;
-                    formRedraw();
-                }
+                stop();
             }
         }
 

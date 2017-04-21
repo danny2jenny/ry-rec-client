@@ -10,11 +10,9 @@ namespace ry.rec
     /// <summary>
     /// 实时播放的Grid 
     /// </summary>
-    class RealPlayerGrid : TableLayoutPanel
+    public class RealPlayerGrid : TableLayoutPanel
     {
-        public NvrManager nvrManager;
-
-        public RealPlayerGrid(int row, int column)
+        public RealPlayerGrid(NvrManager mgr, int row, int column)
         {
             this.RowCount = row;
             this.ColumnCount = column;
@@ -36,36 +34,40 @@ namespace ry.rec
             {
                 for (int c = 0; c < ColumnCount; c++)
                 {
-                    FormRealPlayer player = new FormRealPlayer();
+                    FormRealPlayer player = new FormRealPlayer(mgr);
                     player.Dock = DockStyle.Fill;
                     player.FormBorderStyle = FormBorderStyle.None;
                     player.TopLevel = false;
                     this.Controls.Add(player, c, r);
-                    player.SetPlayer(this, c, r);
+                    player.setGrid(this, c, r);
                     player.Show();
                 }
             }
         }
 
-        public void setNvrManager(NvrManager nvrMgr)
+        // 停止所有的播放
+        public void stopAll()
         {
-            nvrManager = nvrMgr;
+            foreach (FormRealPlayer player in this.Controls)
+            {
+                player.stop();
+            }
         }
 
         // 所有的Form不选择
         public void unSelectAll()
         {
-            foreach(FormRealPlayer player in this.Controls)
+            foreach (FormRealPlayer player in this.Controls)
             {
                 player.formSelect(false);
             }
         }
 
-        // 得到有焦点的播放器
+        // 得到一个播放器
         public FormRealPlayer getPlayer()
         {
             // 如果有空余的播放器
-            foreach(FormRealPlayer pl in this.Controls)
+            foreach (FormRealPlayer pl in this.Controls)
             {
                 if (!pl.isPlaying)
                 {
@@ -78,16 +80,14 @@ namespace ry.rec
             {
                 if (pl.isSelected)
                 {
-                    nvrManager.realPlayStop(pl.realSession);
-
                     return pl;
                 }
             }
 
+            // 直接得到第一个播放器
             if (this.Controls.Count > 0)
             {
                 FormRealPlayer player = (FormRealPlayer)this.GetControlFromPosition(0, 0);
-                nvrManager.realPlayStop(player.realSession);
                 return player;
             }
 

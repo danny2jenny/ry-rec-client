@@ -41,7 +41,7 @@
             this.videoBox.InitialImage = null;
             this.videoBox.Location = new System.Drawing.Point(2, 2);
             this.videoBox.Name = "videoBox";
-            this.videoBox.Size = new System.Drawing.Size(728, 449);
+            this.videoBox.Size = new System.Drawing.Size(528, 317);
             this.videoBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.videoBox.TabIndex = 0;
             this.videoBox.TabStop = false;
@@ -57,11 +57,13 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Highlight;
-            this.ClientSize = new System.Drawing.Size(732, 453);
+            this.ClientSize = new System.Drawing.Size(532, 321);
             this.Controls.Add(this.videoBox);
             this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.Name = "FormRealPlayer";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "实时预览";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FormRealPlayer_FormClosed);
             ((System.ComponentModel.ISupportInitialize)(this.videoBox)).EndInit();
             this.ResumeLayout(false);
 
