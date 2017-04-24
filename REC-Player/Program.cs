@@ -23,7 +23,8 @@ namespace ry.rec
             {
                 //By default CefSharp will use an in-memory cache, you need to specify a Cache Folder to persist data
                 CachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\Cache"),
-                Locale = "zh-CN"
+                Locale = "zh-CN",
+                LogSeverity = LogSeverity.Disable
             };
             settings.RemoteDebuggingPort = 4444;
             //Perform dependency check to make sure all relevant resources are in our output directory.

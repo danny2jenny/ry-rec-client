@@ -30,7 +30,7 @@ namespace ry.rec
             InitializeComponent();
 
             mainForm = this;
-            
+
             // 主窗口设置
             WindowState = FormWindowState.Maximized;
 
@@ -40,14 +40,16 @@ namespace ry.rec
             {
                 Dock = DockStyle.Fill,
             };
-            this.Controls.Add(browser);
 
+            browser.KeyboardHandler = new KeyboardHandler();
+
+            this.Controls.Add(browser);
 
             // 视频播放管理对象
             nvrManager = new NvrManager();
 
             // 实时播放Grid
-            realPlayerGrid = new RealPlayerGrid(nvrManager,5, 1);
+            realPlayerGrid = new RealPlayerGrid(nvrManager, 5, 1);
             realPlayerGrid.Dock = DockStyle.Left;
             realPlayerGrid.Width = 300;
             this.Controls.Add(realPlayerGrid);
@@ -59,6 +61,5 @@ namespace ry.rec
             // 向浏览器注册对象
             browser.RegisterAsyncJsObject("videoPlayer", nvrManager);
         }
-
     }
 }

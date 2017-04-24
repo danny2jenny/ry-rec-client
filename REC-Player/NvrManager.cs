@@ -1,5 +1,6 @@
 ﻿using hk;
 using Newtonsoft.Json;
+using NLog;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -38,6 +39,8 @@ namespace ry.rec
 
     public class NvrManager
     {
+        // 日志
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         // 所有NVR的配置信息
         Hashtable ryNvrCfg = new Hashtable();
@@ -61,6 +64,7 @@ namespace ry.rec
         // 定时执行的函数
         public void onTimer(object source, System.Timers.ElapsedEventArgs e)
         {
+            System.Console.WriteLine("Hello time!");
 
         }
 
@@ -158,6 +162,8 @@ namespace ry.rec
             {
                 nvrSessionId = CHCNetSDK.NET_DVR_Login_V30(nvr.ip, nvr.port, nvr.login, nvr.pass, ref DeviceInfo);
                 nvr.session = nvrSessionId;
+                logger.Info("NVR Login:" + nvr.ip + ":" + nvr.port + '=' + nvrSessionId);
+                logger.Info("ERROR:" + CHCNetSDK.NET_DVR_GetLastError());
             }
         }
 
@@ -184,6 +190,8 @@ namespace ry.rec
                 player.previewInfo.lChannel = channel;
 
                 player.realSession = CHCNetSDK.NET_DVR_RealPlay_V40(nvrCfg.session, ref player.previewInfo, null/*RealData*/, IntPtr.Zero);
+                logger.Info("Real Play:" + nvrCfg.session + ":" + channel);
+                logger.Info("ERROR:" + CHCNetSDK.NET_DVR_GetLastError());
                 if (player.realSession != -1)
                 {
                     //播放成功
@@ -280,7 +288,7 @@ namespace ry.rec
                     break;
             }
             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, d, 0, sp);
-
+            logger.Info("PTZ Control:" + CHCNetSDK.NET_DVR_GetLastError());
         }
 
         public void ptzStop(int nvr, int channel)
@@ -303,9 +311,10 @@ namespace ry.rec
         {
             RyNvr nvrCfg = (RyNvr)ryNvrCfg[nvr];
             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, dir, 0, 7);
-
+            logger.Info("Zoom Control:" + CHCNetSDK.NET_DVR_GetLastError());
             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, 11, 1, 7);
             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, 12, 1, 7);
+            logger.Info("Zoom Control:" + CHCNetSDK.NET_DVR_GetLastError());
         }
     }
 }
