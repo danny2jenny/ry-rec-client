@@ -22,7 +22,20 @@ namespace ry.rec
             const int VK_RIGHT = 0x27;
             const int VK_DOWN = 0x28;
 
+            const int VK_F5 = 0x74;
+            const int VK_F12 = 0x7B;
+
             isKeyboardShortcut = false;
+
+            switch (windowsKeyCode)
+            {
+                case VK_F5:
+                    browserControl.Reload();
+                    break;
+                case VK_F12:
+                    browserControl.ShowDevTools();
+                    break;
+            }
 
             // Don't deal with TABs by default:
             // TODO: Are there any additional ones we need to be careful of?

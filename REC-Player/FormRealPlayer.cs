@@ -80,11 +80,26 @@ namespace ry.rec
         // 停止播放
         public void stop()
         {
-            if (isPlaying)
+            if (this.InvokeRequired)
             {
-                nvrManager.realPlayStop(this.realSession);
-                isPlaying = false;
-                this.Refresh();
+                this.BeginInvoke((Action)delegate
+                {
+                    if (isPlaying)
+                    {
+                        nvrManager.realPlayStop(this.realSession);
+                        isPlaying = false;
+                        this.Refresh();
+                    }
+                });
+            }
+            else
+            {
+                if (isPlaying)
+                {
+                    nvrManager.realPlayStop(this.realSession);
+                    isPlaying = false;
+                    this.Refresh();
+                }
             }
         }
 
@@ -305,6 +320,22 @@ namespace ry.rec
             else
             {
                 ptzSpeed = 10;
+            }
+        }
+
+        // 多线程关闭方法
+        public void closeMe()
+        {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke((Action)delegate
+                {
+                    Close();
+                });
+            }
+            else
+            {
+                Close();
             }
         }
 

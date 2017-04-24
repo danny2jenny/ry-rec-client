@@ -120,7 +120,7 @@ namespace ry.rec
 
             foreach (FormRealPlayer formPlayer in realPlayerFroms)
             {
-                formPlayer.Close();
+                formPlayer.closeMe();
             }
 
             // 注销所有的登录

@@ -40,7 +40,6 @@ namespace ry.rec
             {
                 Dock = DockStyle.Fill,
             };
-
             browser.KeyboardHandler = new KeyboardHandler();
 
             this.Controls.Add(browser);
