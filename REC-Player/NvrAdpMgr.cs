@@ -53,7 +53,7 @@ namespace ry.rec
         public String login;
         public String pass;
         public int type;
-        public int session=0;
+        volatile public int session=0;
 
     }
 
@@ -84,6 +84,33 @@ namespace ry.rec
 
         // 当前程序的路径
         String bashPath = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+
+        // 定时器
+        System.Timers.Timer timer = new System.Timers.Timer(5000);
+
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        public NvrAdapterMgr()
+        {
+            // 定时器初始化
+            timer.Elapsed += new System.Timers.ElapsedEventHandler(onTimer);
+            timer.AutoReset = true;
+            timer.Enabled = false;
+        }
+
+        /// <summary>
+        /// 定时执行的函数
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="e"></param>
+        public void onTimer(object source, System.Timers.ElapsedEventArgs e)
+        {
+            System.Console.WriteLine("Hello time!");
+            timer.Stop();
+            nvrsLogin();
+            timer.Start();
+        }
 
         /// <summary>
         /// 清空nvrConfig
@@ -164,6 +191,7 @@ namespace ry.rec
 
             loadLibs();
             nvrsLogin();
+            timer.Start();
         }
 
         /// <summary>

@@ -40,9 +40,9 @@
             this.videoBox.Image = global::ry.rec.Properties.Resources.no_video;
             this.videoBox.InitialImage = null;
             this.videoBox.Location = new System.Drawing.Point(1, 1);
-            this.videoBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.videoBox.Margin = new System.Windows.Forms.Padding(2);
             this.videoBox.Name = "videoBox";
-            this.videoBox.Size = new System.Drawing.Size(396, 254);
+            this.videoBox.Size = new System.Drawing.Size(397, 255);
             this.videoBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.videoBox.TabIndex = 0;
             this.videoBox.TabStop = false;
@@ -60,7 +60,7 @@
             this.BackColor = System.Drawing.SystemColors.Highlight;
             this.ClientSize = new System.Drawing.Size(399, 257);
             this.Controls.Add(this.videoBox);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "FormRealPlayer";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "实时预览";

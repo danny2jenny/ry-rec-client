@@ -1,8 +1,5 @@
-﻿using hk;
-using Newtonsoft.Json;
-using NLog;
+﻿using NLog;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
@@ -26,37 +23,16 @@ namespace ry.rec
         // 管理的播放界面
         RealPlayerGrid currentRealPlayerGrid;
 
-        // 定时器
-        System.Timers.Timer timer = new System.Timers.Timer(10000);
-
         // NVR接口管理
         NvrAdapterMgr nvrAdapterMgr = new NvrAdapterMgr();
 
         int MAX_POP;
-
-
-        //*******************************************************************************************
-        /// <summary>
-        /// 定时执行的函数
-        /// </summary>
-        /// <param name="source"></param>
-        /// <param name="e"></param>
-        public void onTimer(object source, System.Timers.ElapsedEventArgs e)
-        {
-            System.Console.WriteLine("Hello time!");
-
-        }
 
         /// <summary>
         /// 构造函数
         /// </summary>
         public NvrManager()
         {
-            // 定时器初始化
-            timer.Elapsed += new System.Timers.ElapsedEventHandler(onTimer);
-            timer.AutoReset = true;
-            timer.Enabled = true;
-
             // 配置，最多弹出的视频播放窗口
             MAX_POP = int.Parse(ConfigurationManager.AppSettings["MAX_POP"]);
         }
