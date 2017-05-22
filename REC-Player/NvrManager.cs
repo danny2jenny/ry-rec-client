@@ -12,38 +12,10 @@ using System.Windows.Forms;
 
 namespace ry.rec
 {
-    // 云台方向定义
-    public enum PTZ_DIRECTION
-    {
-        UP = 1,
-        RIGHT = 2,
-        DOWN = 3,
-        LEFT = 4,
-        UP_RIGHT = 11,
-        DOWN_RIGHT = 12,
-        DONN_LEFT = 13,
-        UP_LEFT = 14,
-    }
-    // NVR 的数据结构
-    public class RyNvr
-    {
-        public int id;
-        public String name;
-        public String ip;
-        public int port;
-        public String login;
-        public String pass;
-        public int type;
-        public int session;
-    }
-
     public class NvrManager
     {
         // 日志
         private static Logger logger = LogManager.GetCurrentClassLogger();
-
-        // 所有NVR的配置信息
-        Hashtable ryNvrCfg = new Hashtable();
 
         // 实时播放的Grid
         List<RealPlayerGrid> realPlayerGrids = new List<RealPlayerGrid>();
@@ -57,18 +29,27 @@ namespace ry.rec
         // 定时器
         System.Timers.Timer timer = new System.Timers.Timer(10000);
 
+        // NVR接口管理
+        NvrAdapterMgr nvrAdapterMgr = new NvrAdapterMgr();
+
         int MAX_POP;
 
 
         //*******************************************************************************************
-        // 定时执行的函数
+        /// <summary>
+        /// 定时执行的函数
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="e"></param>
         public void onTimer(object source, System.Timers.ElapsedEventArgs e)
         {
             System.Console.WriteLine("Hello time!");
 
         }
 
-        // 构造函数
+        /// <summary>
+        /// 构造函数
+        /// </summary>
         public NvrManager()
         {
             // 定时器初始化
@@ -76,24 +57,32 @@ namespace ry.rec
             timer.AutoReset = true;
             timer.Enabled = true;
 
-            // 配置
+            // 配置，最多弹出的视频播放窗口
             MAX_POP = int.Parse(ConfigurationManager.AppSettings["MAX_POP"]);
         }
 
-        // 析构函数
+        /// <summary>
+        /// 析构函数
+        /// </summary>
         ~NvrManager()
         {
-            nvrCleanup();
+            nvrAdapterMgr.clearAdpters();
         }
 
-        // 添加一个Grid
+        /// <summary>
+        /// 添加一个Grid
+        /// </summary>
+        /// <param name="grid"></param>
         public void addRealPlayerGrid(RealPlayerGrid grid)
         {
             this.realPlayerGrids.Add(grid);
         }
 
 
-        // 设置当前的播放Grid
+        /// <summary>
+        /// 设置当前的播放Grid
+        /// </summary>
+        /// <param name="rpg"></param>
         public void setCurrentRealPlayerGrid(RealPlayerGrid rpg)
         {
             this.currentRealPlayerGrid = rpg;
@@ -107,119 +96,67 @@ namespace ry.rec
             realPlayerFroms.Remove(player);
         }
 
-        /**
-         * 登出，需要关闭所有
-         */
-        private void nvrCleanup()
-        {
-            // 关闭所有的播放
-            foreach (RealPlayerGrid pg in realPlayerGrids)
-            {
-                pg.stopAll();
-            }
 
-            foreach (FormRealPlayer formPlayer in realPlayerFroms)
-            {
-                formPlayer.closeMe();
-            }
 
-            // 注销所有的登录
-            foreach (RyNvr nvr in ryNvrCfg.Values)
-            {
-                if (nvr.session >= 0)
-                {
-                    CHCNetSDK.NET_DVR_Logout(nvr.session);
-                }
-            }
-
-            ryNvrCfg.Clear();
-            CHCNetSDK.NET_DVR_Cleanup();
-        }
-
-        /**
-         * 初始化NVR配置
-         */
+        /// <summary>
+        /// 初始化NVR配置
+        /// </summary>
+        /// <param name="cfg"></param>
         public void initConfig(String cfg)
         {
-            nvrCleanup();
-
-            // 解析Json
-            List<RyNvr> nvrList = JsonConvert.DeserializeObject<List<RyNvr>>(cfg);
-
-            // 添加到列表
-            foreach (RyNvr nvr in nvrList)
-            {
-                ryNvrCfg.Add(nvr.id, nvr);
-            }
-
-            // 登陆到NVR
-            Int32 nvrSessionId = -1;
-            CHCNetSDK.NET_DVR_DEVICEINFO_V30 DeviceInfo = new CHCNetSDK.NET_DVR_DEVICEINFO_V30();
-            CHCNetSDK.NET_DVR_Init();
-
-            // 同步登录到NVR
-            foreach (RyNvr nvr in ryNvrCfg.Values)
-            {
-                nvrSessionId = CHCNetSDK.NET_DVR_Login_V30(nvr.ip, nvr.port, nvr.login, nvr.pass, ref DeviceInfo);
-                nvr.session = nvrSessionId;
-                logger.Info("NVR Login:" + nvr.ip + ":" + nvr.port + '=' + nvrSessionId);
-                logger.Info("ERROR:" + CHCNetSDK.NET_DVR_GetLastError());
-            }
+            nvrAdapterMgr.loadCfg(cfg);
         }
 
-        /**
-         * 实时播放
-         * 遍历相应的realplayergrid
-         */
+        /// <summary>
+        /// 实时播放，遍历相应的realplayergrid
+        /// </summary>
+        /// <param name="nvr"></param>
+        /// <param name="channel"></param>
         public void realPlayInGrid(int nvr, int channel)
         {
-            // 得到配置
-            RyNvr nvrCfg = (RyNvr)ryNvrCfg[nvr];
-
+            
             // 得到可用的播放窗口
             FormRealPlayer player = currentRealPlayerGrid.getPlayer();
 
-            if ((nvrCfg != null) && (player != null))
+            // 首先停止当前的播放
+            if (player.isPlaying)
             {
-                // 首先停止当前的播放
-                if (player.isPlaying)
-                {
-                    realPlayStop(player.realSession);
-                }
-                player.isPlaying = true;
-                player.previewInfo.lChannel = channel;
-
-                player.realSession = CHCNetSDK.NET_DVR_RealPlay_V40(nvrCfg.session, ref player.previewInfo, null/*RealData*/, IntPtr.Zero);
-                logger.Info("Real Play:" + nvrCfg.session + ":" + channel);
-                logger.Info("ERROR:" + CHCNetSDK.NET_DVR_GetLastError());
-                if (player.realSession != -1)
-                {
-                    //播放成功
-                    player.isPlaying = true;
-                    player.setVideoId(nvr, channel);
-                }
-                else
-                {
-                    player.isPlaying = false;
-                }
+                nvrAdapterMgr.realPlayStop(player.nvr, player.realSession);
             }
+
+            player.isPlaying = true;
+            player.nvr = nvr;
+            player.channel = channel;
+
+            player.realSession = nvrAdapterMgr.realPlay(nvr, channel, player.playerHandle);
+
+            if (player.realSession >=0)
+
+            {
+                //播放成功
+                player.isPlaying = true;
+                player.setVideoId(nvr, channel);
+            }
+            else
+            {
+                player.isPlaying = false;
+            }
+            
         }
 
-        // 新窗体播放视频
+        /// <summary>
+        /// 新窗体播放视频
+        /// </summary>
+        /// <param name="nvr"></param>
+        /// <param name="channel"></param>
+
         public void realPlayInForm(int nvr, int channel)
         {
             if (realPlayerFroms.Count >= MAX_POP)
             {
                 return;
             }
-            // 得到配置
-            RyNvr nvrCfg = (RyNvr)ryNvrCfg[nvr];
-
-            if (nvrCfg == null)
-            {
-                return;
-            }
-
+            
             FormMain.mainForm.BeginInvoke((Action)delegate
             {
                 FormRealPlayer player = new FormRealPlayer(this);
@@ -228,10 +165,9 @@ namespace ry.rec
                 realPlayerFroms.Add(player);
 
                 player.isPlaying = true;
-                player.previewInfo.lChannel = channel;
+                player.realSession = nvrAdapterMgr.realPlay(nvr, channel, player.playerHandle);
 
-                player.realSession = CHCNetSDK.NET_DVR_RealPlay_V40(nvrCfg.session, ref player.previewInfo, null/*RealData*/, IntPtr.Zero);
-                if (player.realSession != -1)
+                if (player.realSession >= 0)
                 {
                     //播放成功
                     player.isPlaying = true;
@@ -247,74 +183,47 @@ namespace ry.rec
             });
         }
 
-        public void realPlayStop(int playSession)
+        /// <summary>
+        /// 停止实时播放
+        /// </summary>
+        /// <param name="playSession"></param>
+        public void realPlayStop(int nvr, int playSession)
         {
-            CHCNetSDK.NET_DVR_StopRealPlay(playSession);
+            nvrAdapterMgr.realPlayStop(nvr, playSession);            
         }
 
-        /**
-         * PTZ 控制
-         */
-        public void ptzCtlStart(int nvr, int channel, PTZ_DIRECTION dir, int speed)
-        {
-            RyNvr nvrCfg = (RyNvr)ryNvrCfg[nvr];
-            int d = 0, sp = (int)(speed * 0.7);
 
-            switch (dir)
-            {
-                case PTZ_DIRECTION.UP:
-                    d = 21;
-                    break;
-                case PTZ_DIRECTION.RIGHT:
-                    d = 24;
-                    break;
-                case PTZ_DIRECTION.DOWN:
-                    d = 22;
-                    break;
-                case PTZ_DIRECTION.LEFT:
-                    d = 23;
-                    break;
-                case PTZ_DIRECTION.UP_RIGHT:
-                    d = 26;
-                    break;
-                case PTZ_DIRECTION.DOWN_RIGHT:
-                    d = 28;
-                    break;
-                case PTZ_DIRECTION.DONN_LEFT:
-                    d = 27;
-                    break;
-                case PTZ_DIRECTION.UP_LEFT:
-                    d = 25;
-                    break;
-            }
-            CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, d, 0, sp);
-            logger.Info("PTZ Control:" + CHCNetSDK.NET_DVR_GetLastError());
+        /// <summary>
+        /// PTZ 控制
+        /// </summary>
+        /// <param name="nvr"></param>
+        /// <param name="channel"></param>
+        /// <param name="dir"></param>
+        /// <param name="speed"></param>
+        public void ptzCtlStart(int nvr, int channel, PTZ_DIR dir, int speed)
+        {
+            nvrAdapterMgr.ptzCtlStart(nvr, channel, dir, speed);
         }
 
+        /// <summary>
+        /// 停止PTZ
+        /// </summary>
+        /// <param name="nvr"></param>
+        /// <param name="channel"></param>
         public void ptzStop(int nvr, int channel)
         {
-            RyNvr nvrCfg = (RyNvr)ryNvrCfg[nvr];
-            CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, 21, 1, 1);
-            CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, 22, 1, 1);
-            CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, 23, 1, 1);
-            CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, 24, 1, 1);
-            CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, 25, 1, 1);
-            CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, 26, 1, 1);
-            CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, 27, 1, 1);
-            CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, 28, 1, 1);
+            nvrAdapterMgr.ptzStop(nvr, channel);   
         }
 
-        /**
-         * zoom 控制
-         */
-        public void zoomStart(int nvr, int channel, int dir)
+        /// <summary>
+        /// zoom 控制
+        /// </summary>
+        /// <param name="nvr"></param>
+        /// <param name="channel"></param>
+        /// <param name="dir"></param>
+        public void zoomStart(int nvr, int channel, ZOOM_DIR dir)
         {
-            RyNvr nvrCfg = (RyNvr)ryNvrCfg[nvr];
-            CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, dir, 0, 7);
-            logger.Info("Zoom Control:" + CHCNetSDK.NET_DVR_GetLastError());
-            CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, 11, 1, 7);
-            CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(nvrCfg.session, channel, 12, 1, 7);
-            logger.Info("Zoom Control:" + CHCNetSDK.NET_DVR_GetLastError());
+            nvrAdapterMgr.zoomStart(nvr, channel, dir);
         }
     }
 }

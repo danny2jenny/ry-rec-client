@@ -133,6 +133,7 @@
       <DependentUpon>FormRealPlayer.cs</DependentUpon>
     </Compile>
     <Compile Include="KeyboardHandler.cs" />
+    <Compile Include="NvrAdpMgr.cs" />
     <Compile Include="NvrManager.cs" />
     <Compile Include="RealPlayerGrid.cs">
       <SubType>Component</SubType>

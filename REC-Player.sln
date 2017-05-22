@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Blend for Visual Studio 14
+# Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "REC-Player", "REC-Player\REC-Player.csproj", "{6D5AC085-7AB3-450E-B243-25146FBB8062}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hk_nvr", "hk_nvr\hk_nvr.csproj", "{4F86D4C4-5019-4BB7-9BAF-3C0E223CA5C2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,6 +24,14 @@ Global
 		{6D5AC085-7AB3-450E-B243-25146FBB8062}.Release|x86.ActiveCfg = Release|x86
 		{6D5AC085-7AB3-450E-B243-25146FBB8062}.Release|x86.Build.0 = Release|x86
 		{6D5AC085-7AB3-450E-B243-25146FBB8062}.Release|x86.Deploy.0 = Release|x86
+		{4F86D4C4-5019-4BB7-9BAF-3C0E223CA5C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F86D4C4-5019-4BB7-9BAF-3C0E223CA5C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F86D4C4-5019-4BB7-9BAF-3C0E223CA5C2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4F86D4C4-5019-4BB7-9BAF-3C0E223CA5C2}.Debug|x86.Build.0 = Debug|Any CPU
+		{4F86D4C4-5019-4BB7-9BAF-3C0E223CA5C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F86D4C4-5019-4BB7-9BAF-3C0E223CA5C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F86D4C4-5019-4BB7-9BAF-3C0E223CA5C2}.Release|x86.ActiveCfg = Release|Any CPU
+		{4F86D4C4-5019-4BB7-9BAF-3C0E223CA5C2}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

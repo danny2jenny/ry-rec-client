@@ -35,7 +35,7 @@ namespace ry.rec
         bool fullScreen = false;
 
         // PTZ 方向
-        PTZ_DIRECTION ptzDirection = PTZ_DIRECTION.UP;
+        PTZ_DIR ptzDirection = PTZ_DIR.UP;
 
         // ZOOM 速度
         int ptzSpeed = 0;
@@ -47,37 +47,40 @@ namespace ry.rec
         public bool isSelected = false;
 
         // 播放数据
-        public CHCNetSDK.NET_DVR_PREVIEWINFO previewInfo = new CHCNetSDK.NET_DVR_PREVIEWINFO();
-        public Int32 realSession = -1;
+        public int realSession = -1;
+        public IntPtr playerHandle;
 
         // NVR 和相应的通道
-        int nvr, channel;
+        public int nvr, channel;
 
-        // 构造函数
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        /// <param name="mgr"></param>
         public FormRealPlayer(NvrManager mgr)
         {
             InitializeComponent();
 
             this.BackColor = Color.White;
             this.nvrManager = mgr;
-
-            previewInfo.hPlayWnd = this.videoBox.Handle;//预览窗口 live view window
-            previewInfo.lChannel = 33;//预览的设备通道 the device channel number
-            previewInfo.dwStreamType = 0;//码流类型：0-主码流，1-子码流，2-码流3，3-码流4，以此类推
-            previewInfo.dwLinkMode = 0;//连接方式：0- TCP方式，1- UDP方式，2- 多播方式，3- RTP方式，4-RTP/RTSP，5-RSTP/HTTP 
-            previewInfo.bBlocked = true; //0- 非阻塞取流，1- 阻塞取流
-            previewInfo.dwDisplayBufNum = 3; //播放库显示缓冲区最大帧数
+            this.playerHandle = this.videoBox.Handle;
 
         }
 
-        // 设置播放信息
+        /// <summary>
+        /// 设置播放信息 
+        /// </summary>
+        /// <param name="nvr"></param>
+        /// <param name="channel"></param>
         public void setVideoId(int nvr, int channel)
         {
             this.nvr = nvr;
             this.channel = channel;
         }
 
-        // 停止播放
+        /// <summary>
+        /// 停止播放
+        /// </summary>
         public void stop()
         {
             if (this.InvokeRequired)
@@ -86,7 +89,7 @@ namespace ry.rec
                 {
                     if (isPlaying)
                     {
-                        nvrManager.realPlayStop(this.realSession);
+                        nvrManager.realPlayStop(this.nvr, this.realSession);
                         isPlaying = false;
                         this.Refresh();
                     }
@@ -96,14 +99,17 @@ namespace ry.rec
             {
                 if (isPlaying)
                 {
-                    nvrManager.realPlayStop(this.realSession);
+                    nvrManager.realPlayStop(this.nvr,this.realSession);
                     isPlaying = false;
                     this.Refresh();
                 }
             }
         }
 
-        // 设置颜色
+        /// <summary>
+        /// 设置颜色
+        /// </summary>
+        /// <param name="v"></param>
         public void formSelect(bool v)
         {
             if (v)
@@ -118,7 +124,12 @@ namespace ry.rec
             }
         }
 
-        // 设置显示的容器和其他的值
+        /// <summary>
+        /// 设置显示的容器和其他的值
+        /// </summary>
+        /// <param name="pr"></param>
+        /// <param name="column"></param>
+        /// <param name="row"></param>
         public void setGrid(RealPlayerGrid pr, int column, int row)
         {
             this.parentGrid = pr;
@@ -126,7 +137,11 @@ namespace ry.rec
             this.row = row;
         }
 
-        // 视频双击
+        /// <summary>
+        /// 视频双击
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void videoBox_DoubleClick(object sender, EventArgs e)
         {
             if (this.fullScreen)
@@ -168,7 +183,11 @@ namespace ry.rec
             }
         }
 
-        // 视频鼠标按下
+        /// <summary>
+        /// 视频鼠标按下
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void videoBox_MouseDown(object sender, MouseEventArgs e)
         {
             if (!isPlaying)
@@ -187,7 +206,11 @@ namespace ry.rec
 
         }
 
-        // 视频鼠标释放
+        /// <summary>
+        /// 视频鼠标释放
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void videoBox_MouseUp(object sender, MouseEventArgs e)
         {
             if (!isPlaying)
@@ -203,7 +226,11 @@ namespace ry.rec
             }
         }
 
-        // 鼠标滚轮
+        /// <summary>
+        /// 鼠标滚轮
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void videoBox_MouseWheel(object sender, MouseEventArgs e)
         {
             if (!isPlaying)
@@ -215,7 +242,7 @@ namespace ry.rec
                 // 上滚
                 Task.Run(() =>
                 {
-                    nvrManager.zoomStart(nvr, channel, 11);
+                    nvrManager.zoomStart(nvr, channel, ZOOM_DIR.ZOOM_IN);
                 });
 
             }
@@ -224,11 +251,16 @@ namespace ry.rec
                 // 下滚
                 Task.Run(() =>
                 {
-                    nvrManager.zoomStart(nvr, channel, 12);
+                    nvrManager.zoomStart(nvr, channel, ZOOM_DIR.ZOOM_OUT);
                 });
             }
         }
 
+        /// <summary>
+        /// 窗口关闭事件
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void FormRealPlayer_FormClosed(object sender, FormClosedEventArgs e)
         {
             stop();
@@ -241,7 +273,11 @@ namespace ry.rec
             GC.SuppressFinalize(this);
         }
 
-        // 视频单击
+        /// <summary>
+        /// 视频单击
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void videoBox_MouseClick(object sender, MouseEventArgs e)
         {
             // 左键，设置焦点
@@ -258,7 +294,11 @@ namespace ry.rec
             }
         }
 
-        // 视频鼠移动
+        /// <summary>
+        /// 视频鼠移动
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void videoBox_MouseMove(object sender, MouseEventArgs e)
         {
             // 中心点
@@ -271,42 +311,42 @@ namespace ry.rec
             if (angle >= -22.5 && angle < 22.5)
             {
                 this.Cursor = this.cur_right;
-                ptzDirection = PTZ_DIRECTION.RIGHT;
+                ptzDirection = PTZ_DIR.RIGHT;
             }
             else if (angle >= 22.5 && angle < 67.5)
             {
                 this.Cursor = this.cur_up_right;
-                ptzDirection = PTZ_DIRECTION.UP_RIGHT;
+                ptzDirection = PTZ_DIR.UP_RIGHT;
             }
             else if (angle >= 67.5 && angle < 112.5)
             {
                 this.Cursor = this.cur_up;
-                ptzDirection = PTZ_DIRECTION.UP;
+                ptzDirection = PTZ_DIR.UP;
             }
             else if (angle >= 112.5 && angle < 167.5)
             {
                 this.Cursor = this.cur_up_left;
-                ptzDirection = PTZ_DIRECTION.UP_LEFT;
+                ptzDirection = PTZ_DIR.UP_LEFT;
             }
             else if (angle >= 167.5 || angle <= -167.5)
             {
                 this.Cursor = this.cur_left;
-                ptzDirection = PTZ_DIRECTION.LEFT;
+                ptzDirection = PTZ_DIR.LEFT;
             }
             else if (angle < -22.5 && angle >= -67.5)
             {
                 this.Cursor = this.cur_down_right;
-                ptzDirection = PTZ_DIRECTION.DOWN_RIGHT;
+                ptzDirection = PTZ_DIR.DOWN_RIGHT;
             }
             else if (angle < -67.5 && angle >= -112.5)
             {
                 this.Cursor = this.cur_down;
-                ptzDirection = PTZ_DIRECTION.DOWN;
+                ptzDirection = PTZ_DIR.DOWN;
             }
             else if (angle < -112.5 && angle >= -167.5)
             {
                 this.Cursor = this.cur_down_left;
-                ptzDirection = PTZ_DIRECTION.DONN_LEFT;
+                ptzDirection = PTZ_DIR.DONN_LEFT;
             }
 
             // 距离中心的距离（1~10）,表示PTZ速度
@@ -323,7 +363,9 @@ namespace ry.rec
             }
         }
 
-        // 多线程关闭方法
+        /// <summary>
+        /// 多线程关闭方法
+        /// </summary>
         public void closeMe()
         {
             if (this.InvokeRequired)
