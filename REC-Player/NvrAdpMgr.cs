@@ -173,7 +173,7 @@ namespace ry.rec
 
             foreach (NVR_INFO nvrInfo in nvrConfig.Values)
             {
-                nvrAdp = (NvrInterface)nvrAdapters[nvrInfo.id];
+                nvrAdp = (NvrInterface)nvrAdapters[nvrInfo.type];
                 if (nvrAdp != null)
                 {
                     // 接口存在，退出
