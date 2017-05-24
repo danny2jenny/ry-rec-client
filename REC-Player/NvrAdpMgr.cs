@@ -158,9 +158,10 @@ namespace ry.rec
         public void clearAdpters()
         {
             nvrConfig.Clear();
-            //foreach(NvrInterface adp in nvrAdapters.Values){
-            //    adp.nvrFree();
-            //}
+            foreach (NvrInterface adp in nvrAdapters.Values)
+            {
+                adp.nvrFree();
+            }
         }
 
 
