@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace ry.rec
 {
-    public class NvrManager
+    public class PlayerManager
     {
         // 日志
         private static Logger logger = LogManager.GetCurrentClassLogger();
@@ -24,14 +24,14 @@ namespace ry.rec
         RealPlayerGrid currentRealPlayerGrid;
 
         // NVR接口管理
-        NvrAdapterMgr nvrAdapterMgr = new NvrAdapterMgr();
+        public NvrAdapterMgr nvrAdapterMgr = new NvrAdapterMgr();
 
         int MAX_POP;
 
         /// <summary>
         /// 构造函数
         /// </summary>
-        public NvrManager()
+        public PlayerManager()
         {
             // 配置，最多弹出的视频播放窗口
             MAX_POP = int.Parse(ConfigurationManager.AppSettings["MAX_POP"]);
@@ -40,7 +40,7 @@ namespace ry.rec
         /// <summary>
         /// 析构函数
         /// </summary>
-        ~NvrManager()
+        ~PlayerManager()
         {
             nvrAdapterMgr.clearAdpters();
         }
@@ -160,46 +160,24 @@ namespace ry.rec
         }
 
         /// <summary>
-        /// 停止实时播放
-        /// </summary>
-        /// <param name="playSession"></param>
-        public void realPlayStop(int nvr, int playSession)
-        {
-            nvrAdapterMgr.realPlayStop(nvr, playSession);            
-        }
-
-
-        /// <summary>
-        /// PTZ 控制
+        /// 历史回放窗口
         /// </summary>
         /// <param name="nvr"></param>
         /// <param name="channel"></param>
-        /// <param name="dir"></param>
-        /// <param name="speed"></param>
-        public void ptzCtlStart(int nvr, int channel, PTZ_DIR dir, int speed)
+        public void playBack(int nvr, int channel, String name)
         {
-            nvrAdapterMgr.ptzCtlStart(nvr, channel, dir, speed);
+            FormMain.mainForm.BeginInvoke((Action)delegate
+            {
+                FormPlayBack formPlayBack = new FormPlayBack(this);
+                formPlayBack.TopMost = true;
+                formPlayBack.nvr = nvr;
+                formPlayBack.channel = channel;
+                formPlayBack.Text = "历史回放：" + name;
+                formPlayBack.Show();
+            });
+
         }
 
-        /// <summary>
-        /// 停止PTZ
-        /// </summary>
-        /// <param name="nvr"></param>
-        /// <param name="channel"></param>
-        public void ptzStop(int nvr, int channel)
-        {
-            nvrAdapterMgr.ptzStop(nvr, channel);   
-        }
-
-        /// <summary>
-        /// zoom 控制
-        /// </summary>
-        /// <param name="nvr"></param>
-        /// <param name="channel"></param>
-        /// <param name="dir"></param>
-        public void zoomStart(int nvr, int channel, ZOOM_DIR dir)
-        {
-            nvrAdapterMgr.zoomStart(nvr, channel, dir);
-        }
+        
     }
 }

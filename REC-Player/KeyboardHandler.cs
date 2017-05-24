@@ -30,7 +30,7 @@ namespace ry.rec
             switch (windowsKeyCode)
             {
                 case VK_F5:
-                    browserControl.Reload();
+                    browserControl.Reload(true);
                     break;
                 case VK_F12:
                     browserControl.ShowDevTools();

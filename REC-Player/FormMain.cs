@@ -20,7 +20,7 @@ namespace ry.rec
         private readonly ChromiumWebBrowser browser;
 
         // 播放管理
-        private NvrManager nvrManager;
+        private PlayerManager nvrManager;
 
         // 播放界面
         RealPlayerGrid realPlayerGrid;
@@ -45,7 +45,7 @@ namespace ry.rec
             this.Controls.Add(browser);
 
             // 视频播放管理对象
-            nvrManager = new NvrManager();
+            nvrManager = new PlayerManager();
 
             // 实时播放Grid
             realPlayerGrid = new RealPlayerGrid(nvrManager, 5, 1);
@@ -58,7 +58,7 @@ namespace ry.rec
             nvrManager.addRealPlayerGrid(realPlayerGrid);
 
             // 向浏览器注册对象
-            browser.RegisterAsyncJsObject("videoPlayer", nvrManager);
+            browser.RegisterAsyncJsObject("videoPlayer", nvrManager);            
         }
     }
 }

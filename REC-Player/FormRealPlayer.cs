@@ -19,7 +19,7 @@ namespace ry.rec
         int column, row;
 
         // NVR Manager
-        NvrManager nvrManager;
+        PlayerManager nvrManager;
 
         // 加载光标资源
         Cursor cur_up = new Cursor(Resources.up.GetHicon());
@@ -57,7 +57,7 @@ namespace ry.rec
         /// 构造函数
         /// </summary>
         /// <param name="mgr"></param>
-        public FormRealPlayer(NvrManager mgr)
+        public FormRealPlayer(PlayerManager mgr)
         {
             InitializeComponent();
 
@@ -89,7 +89,7 @@ namespace ry.rec
                 {
                     if (isPlaying)
                     {
-                        nvrManager.realPlayStop(this.nvr, this.realSession);
+                        nvrManager.nvrAdapterMgr.realPlayStop(this.nvr, this.realSession);
                         isPlaying = false;
                         this.Refresh();
                     }
@@ -99,7 +99,7 @@ namespace ry.rec
             {
                 if (isPlaying)
                 {
-                    nvrManager.realPlayStop(this.nvr,this.realSession);
+                    nvrManager.nvrAdapterMgr.realPlayStop(this.nvr,this.realSession);
                     isPlaying = false;
                     this.Refresh();
                 }
@@ -199,7 +199,7 @@ namespace ry.rec
             {
                 Task.Run(() =>
                 {
-                    nvrManager.ptzCtlStart(nvr, channel, ptzDirection, ptzSpeed);
+                    nvrManager.nvrAdapterMgr.ptzCtlStart(nvr, channel, ptzDirection, ptzSpeed);
                 });
 
             }
@@ -221,7 +221,7 @@ namespace ry.rec
             {
                 Task.Run(() =>
                 {
-                    nvrManager.ptzStop(nvr, channel);
+                    nvrManager.nvrAdapterMgr.ptzStop(nvr, channel);
                 });
             }
         }
@@ -242,7 +242,7 @@ namespace ry.rec
                 // 上滚
                 Task.Run(() =>
                 {
-                    nvrManager.zoomStart(nvr, channel, ZOOM_DIR.ZOOM_IN);
+                    nvrManager.nvrAdapterMgr.zoomStart(nvr, channel, ZOOM_DIR.ZOOM_IN);
                 });
 
             }
@@ -251,7 +251,7 @@ namespace ry.rec
                 // 下滚
                 Task.Run(() =>
                 {
-                    nvrManager.zoomStart(nvr, channel, ZOOM_DIR.ZOOM_OUT);
+                    nvrManager.nvrAdapterMgr.zoomStart(nvr, channel, ZOOM_DIR.ZOOM_OUT);
                 });
             }
         }

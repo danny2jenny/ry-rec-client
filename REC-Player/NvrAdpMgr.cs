@@ -16,6 +16,14 @@ namespace ry.rec
         NO_LOGIN = -3,
     }
 
+    // 回放命令
+    public enum PLAY_BACK_CMD
+    {
+        START = 1,      // 开始
+        PAUSE = 3,      // 暂停
+        RESUME = 4,     // 恢复
+        POSITION = 5    // 定位
+    }
     public enum PTZ_DIR
     {
         UP = 1,
@@ -41,6 +49,15 @@ namespace ry.rec
     }
 
     /// <summary>
+    /// 时间对的结构体
+    /// </summary>
+    public struct DATA_PAIR
+    {
+        public DateTime start;
+        public DateTime end;
+    }
+
+    /// <summary>
     /// NVR 配置信息 
     /// 
     /// </summary>
@@ -58,6 +75,25 @@ namespace ry.rec
     }
 
     /// <summary>
+    /// 历史视频回调的接口
+    /// </summary>
+    public interface PlayBackEvent
+    {
+        void onPlayBackTime(int parm);
+    }
+
+    /// <summary>
+    /// 回访控制数据
+    /// </summary>
+    public class PlayBackCtlBlock
+    {
+        public int session;
+        public DateTime start;
+        public DateTime end;
+        public PlayBackEvent even;
+    }
+
+    /// <summary>
     /// NVR Adp 的接口
     /// </summary>
     public interface NvrInterface
@@ -68,6 +104,10 @@ namespace ry.rec
         void nvrPtzStart(int session, int cha, PTZ_DIR dir, int speed);
         void nvrPtzStop(int session, int cha);
         void nvrZoom(int session, int cha, ZOOM_DIR dir);
+        List<DATA_PAIR> searchHistory(int session, int cha, DateTime start, DateTime end);
+        int playBackByTime(int session, int cha, DateTime start, DateTime end, IntPtr handle, PlayBackEvent iPlayBack);
+        int playBackCtl(int session, PLAY_BACK_CMD cmd, Object parm);
+        void playBackClose(int session);
         void nvrFree();
     }
 
@@ -106,7 +146,6 @@ namespace ry.rec
         /// <param name="e"></param>
         public void onTimer(object source, System.Timers.ElapsedEventArgs e)
         {
-            System.Console.WriteLine("Hello time!");
             timer.Stop();
             nvrsLogin();
             timer.Start();
@@ -119,10 +158,9 @@ namespace ry.rec
         public void clearAdpters()
         {
             nvrConfig.Clear();
-            foreach(NvrInterface adp in nvrAdapters.Values){
-                adp.nvrFree();
-            }
-
+            //foreach(NvrInterface adp in nvrAdapters.Values){
+            //    adp.nvrFree();
+            //}
         }
 
 
@@ -162,16 +200,17 @@ namespace ry.rec
             NvrInterface nvrAdp;
             foreach (NVR_INFO nvrInfo in nvrConfig.Values)
             {
+                if (nvrInfo.session > 0)
+                {
+                    continue;
+                }
                 nvrAdp = (NvrInterface)nvrAdapters[nvrInfo.type];
 
                 if (nvrAdp != null)
                 {
                     nvrInfo.session = nvrAdp.nvrLogin(nvrInfo.ip, nvrInfo.port, nvrInfo.login, nvrInfo.pass);
                 }
-                
-
             }
-
         }
 
         /// <summary>
@@ -344,6 +383,124 @@ namespace ry.rec
             }
 
             nvrAdp.nvrZoom(nvrInfo.session, channel, dir);
+
+        }
+
+        /// <summary>
+        /// 查询一天内的历史视频
+        /// </summary>
+        /// <param name="nvr"></param>
+        /// <param name="channel"></param>
+        /// <param name="date"></param>
+        public List<DATA_PAIR> searchHistory(int nvr, int channel, DateTime start, DateTime end)
+        {
+
+            NVR_INFO nvrInfo = (NVR_INFO)nvrConfig[nvr];
+            if (nvrInfo == null)
+            {
+                return null;
+            }
+
+            if (nvrInfo.session < 1)
+            {
+                return null;
+            }
+
+            NvrInterface nvrAdp = (NvrInterface)nvrAdapters[nvrInfo.type];
+
+            if (nvrAdp == null)
+            {
+                return null;
+            }
+
+            return nvrAdp.searchHistory(nvrInfo.session, channel, start, end);
+
+        }
+
+        /// <summary>
+        /// 播放历史视频
+        /// </summary>
+        /// <param name="nvr"></param>
+        /// <param name="channel"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <param name="handle"></param>
+        /// <param name="iPlayBack"></param>
+        /// <returns></returns>
+        public int playBackByTime(int nvr, int channel, DateTime start, DateTime end, IntPtr handle, PlayBackEvent iPlayBack)
+        {
+            NVR_INFO nvrInfo = (NVR_INFO)nvrConfig[nvr];
+            if (nvrInfo == null)
+            {
+                return Convert.ToInt32(NVR_ERROR.NO_NVR_CFG);
+            }
+
+            if (nvrInfo.session < 1)
+            {
+                return Convert.ToInt32(NVR_ERROR.NO_LOGIN);
+            }
+
+            NvrInterface nvrAdp = (NvrInterface)nvrAdapters[nvrInfo.type];
+
+            if (nvrAdp == null)
+            {
+                return Convert.ToInt32(NVR_ERROR.NO_NVR_ADP);
+            }
+
+            return nvrAdp.playBackByTime(nvrInfo.session, channel, start, end, handle, iPlayBack);
+        }
+
+        public int playBackCtl(int nvr, int session, PLAY_BACK_CMD cmd, Object parm)
+        {
+            NVR_INFO nvrInfo = (NVR_INFO)nvrConfig[nvr];
+            if (nvrInfo == null)
+            {
+                return Convert.ToInt32(NVR_ERROR.NO_NVR_CFG);
+            }
+
+            if (nvrInfo.session < 1)
+            {
+                return Convert.ToInt32(NVR_ERROR.NO_LOGIN);
+            }
+
+            NvrInterface nvrAdp = (NvrInterface)nvrAdapters[nvrInfo.type];
+
+            if (nvrAdp == null)
+            {
+                return Convert.ToInt32(NVR_ERROR.NO_NVR_ADP);
+            }
+
+            return nvrAdp.playBackCtl(session, cmd, parm);
+
+        }
+
+        /// <summary>
+        /// 关闭实时播放
+        /// </summary>
+        /// <param name="nvr"></param>
+        /// <param name="session"></param>
+        public void playBackClose(int nvr, int session)
+        {
+
+            NVR_INFO nvrInfo = (NVR_INFO)nvrConfig[nvr];
+            if (nvrInfo == null)
+            {
+                return;
+            }
+
+            if (nvrInfo.session < 1)
+            {
+                return;
+            }
+
+            NvrInterface nvrAdp = (NvrInterface)nvrAdapters[nvrInfo.type];
+
+            if (nvrAdp == null)
+            {
+                return;
+            }
+
+            nvrAdp.playBackClose(session);
 
         }
 

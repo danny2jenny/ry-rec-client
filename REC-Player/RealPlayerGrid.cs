@@ -12,7 +12,7 @@ namespace ry.rec
     /// </summary>
     public class RealPlayerGrid : TableLayoutPanel
     {
-        public RealPlayerGrid(NvrManager mgr, int row, int column)
+        public RealPlayerGrid(PlayerManager mgr, int row, int column)
         {
             this.RowCount = row;
             this.ColumnCount = column;
