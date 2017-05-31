@@ -23,6 +23,8 @@ namespace ry.rec
 
         bool draging = false;           // 是否在拖动
 
+        public bool outClose = false;          // 是否由外部关闭
+
         DateTime playStart, playEnd, currentPlayTime = new DateTime();
 
         /// <summary>
@@ -79,7 +81,8 @@ namespace ry.rec
                 {
                     return;
                 }
-                timeSlider.Value = parm;                
+                if (parm<=timeSlider.Maximum) timeSlider.Value = parm;                
+
             }
         }
 
@@ -132,10 +135,10 @@ namespace ry.rec
         /// </summary>
         private void stopPlay()
         {
-            if (isPlaying)
+            if (this.isPlaying)
             {
                 playerManager.nvrAdapterMgr.playBackClose(nvr, playBackSession);
-                isPlaying = false;
+                this.isPlaying = false;
                 this.Refresh();
             }
         }
@@ -148,6 +151,10 @@ namespace ry.rec
         private void FormPlayBack_FormClosed(object sender, FormClosedEventArgs e)
         {
             stopPlay();
+            if (!outClose)
+            {
+                playerManager.removePlayBack(this);
+            }
             this.Dispose();
             GC.SuppressFinalize(this);
         }

@@ -18,6 +18,8 @@ namespace ry.rec
         RealPlayerGrid parentGrid;
         int column, row;
 
+        public bool outClose = false;          // 是否由外部关闭
+
         // NVR Manager
         PlayerManager nvrManager;
 
@@ -266,7 +268,10 @@ namespace ry.rec
             stop();
             if (parentGrid == null)
             {
-                nvrManager.removeRealPlayer(this);
+                if (!outClose)
+                {
+                    nvrManager.removeRealPlayer(this);
+                }                
             }
 
             this.Dispose();

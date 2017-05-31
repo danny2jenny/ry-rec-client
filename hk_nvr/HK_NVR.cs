@@ -188,6 +188,7 @@ namespace ry.rec
         /// 释放SDK资源
         /// </summary>
         void NvrInterface.nvrFree() {
+            playBackBlocks.Clear();
             CHCNetSDK.NET_DVR_Cleanup();
         }
 

@@ -17,8 +17,12 @@ namespace ry.rec
         // 实时播放的Grid
         List<RealPlayerGrid> realPlayerGrids = new List<RealPlayerGrid>();
 
-        // 实时播放的From
-        List<FormRealPlayer> realPlayerFroms = new List<FormRealPlayer>();
+        // 实时播放的Form
+        List<FormRealPlayer> realPlayerForms = new List<FormRealPlayer>();
+
+        // 历史播放的Form
+        List<FormPlayBack> playBackForms = new List<FormPlayBack>();
+
 
         // 管理的播放界面
         RealPlayerGrid currentRealPlayerGrid;
@@ -65,14 +69,13 @@ namespace ry.rec
         }
 
         /// <summary>
-        ///  
+        /// 
         /// </summary>
+        /// <param name="player"></param>
         public void removeRealPlayer(FormRealPlayer player)
         {
-            realPlayerFroms.Remove(player);
+            realPlayerForms.Remove(player);
         }
-
-
 
         /// <summary>
         /// 初始化NVR配置
@@ -80,6 +83,7 @@ namespace ry.rec
         /// <param name="cfg"></param>
         public void initConfig(String cfg)
         {
+            closeAllVideo();
             nvrAdapterMgr.loadCfg(cfg);
         }
 
@@ -97,7 +101,7 @@ namespace ry.rec
             // 首先停止当前的播放
             if (player.isPlaying)
             {
-                nvrAdapterMgr.realPlayStop(player.nvr, player.realSession);
+                player.stop();
             }
 
             player.isPlaying = true;
@@ -128,7 +132,7 @@ namespace ry.rec
 
         public void realPlayInForm(int nvr, int channel)
         {
-            if (realPlayerFroms.Count >= MAX_POP)
+            if (realPlayerForms.Count >= MAX_POP)
             {
                 return;
             }
@@ -138,7 +142,7 @@ namespace ry.rec
                 FormRealPlayer player = new FormRealPlayer(this);
 
                 player.TopMost = true;
-                realPlayerFroms.Add(player);
+                realPlayerForms.Add(player);
 
                 player.isPlaying = true;
                 player.realSession = nvrAdapterMgr.realPlay(nvr, channel, player.playerHandle);
@@ -174,10 +178,51 @@ namespace ry.rec
                 formPlayBack.channel = channel;
                 formPlayBack.Text = "历史回放：" + name;
                 formPlayBack.Show();
+                playBackForms.Add(formPlayBack);
             });
-
+        }
+        
+        /// <summary>
+        /// 从管理列表中删除历史播放窗口
+        /// </summary>
+        /// <param name="playBack"></param>
+        public void removePlayBack(FormPlayBack playBack)
+        {
+            this.playBackForms.Remove(playBack);
         }
 
-        
+        /// <summary>
+        /// 关闭所有的播放
+        /// 包括历史和实时
+        /// todo: 没有考虑多个RealGrid
+        /// </summary>
+        private void closeAllVideo()
+        {
+            FormMain.mainForm.BeginInvoke((Action)delegate
+            {
+                // 关闭所有的Grid播放
+                currentRealPlayerGrid.stopAll();
+                
+
+                // 关闭实时播放窗口
+                foreach (FormRealPlayer player in realPlayerForms)
+                {
+                    player.outClose = true;
+                    player.Close();
+                }
+                realPlayerForms.Clear();
+                // todo: 这个地方关闭的时候，不知道什么原因，NvrAdpMgr可能找不到对应的接口，
+                // 通过NvrInterface.nvrFree中加入清除历史播放的Session可以解决部分问题。
+                foreach (FormPlayBack playBack in playBackForms)
+                {
+                    playBack.outClose = true;
+                    playBack.Close();
+                }
+                playBackForms.Clear();
+
+                currentRealPlayerGrid.Refresh();
+            });
+            
+        }        
     }
 }

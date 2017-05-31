@@ -23,6 +23,7 @@ namespace ry.rec
             const int VK_DOWN = 0x28;
 
             const int VK_F5 = 0x74;
+            const int VK_F6 = 0x75;
             const int VK_F12 = 0x7B;
 
             isKeyboardShortcut = false;
@@ -30,6 +31,9 @@ namespace ry.rec
             switch (windowsKeyCode)
             {
                 case VK_F5:
+                    browserControl.Reload();
+                    break;
+                case VK_F6:
                     browserControl.Reload(true);
                     break;
                 case VK_F12:
